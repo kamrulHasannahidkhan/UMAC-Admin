@@ -1,0 +1,306 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Image from "next/image";
+
+type HistoryItem = { _id: string; year: string; title: string; description: string; order: number };
+type Vision = { _id: string; heading: string; description: string; image: string };
+type Objective = { title: string; description: string };
+type Aim = { _id: string; aim: string; objectives: Objective[] };
+type Person = { _id: string; group: string; name: string; title: string; photo: string; order: number };
+
+const SUB_TABS = ["History", "Vision", "Aim & Objective", "Org Structure", "Founder Member", "EC Members", "GB Members"];
+const GROUP_MAP: Record<string, string> = {
+  "Founder Member": "founder-member",
+  "Former VC": "former-vc",
+  "Former Principal": "former-principal",
+};
+
+export default function AboutPageAdmin() {
+  const [subTab, setSubTab] = useState("History");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // History
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [historyForm, setHistoryForm] = useState({ year: "", title: "", description: "", order: 0 });
+  const [editingHistoryId, setEditingHistoryId] = useState<string | null>(null);
+
+  // Vision
+  const [vision, setVision] = useState<Vision | null>(null);
+  const [visionForm, setVisionForm] = useState({ heading: "", description: "" });
+  const [visionImage, setVisionImage] = useState<File | null>(null);
+
+  // Aim
+  const [aim, setAim] = useState<Aim | null>(null);
+  const [aimText, setAimText] = useState("");
+  const [objectives, setObjectives] = useState<Objective[]>([{ title: "", description: "" }]);
+
+  // People
+  const [people, setPeople] = useState<Person[]>([]);
+  const [personForm, setPersonForm] = useState({ name: "", title: "", order: 0 });
+  const [personPhoto, setPersonPhoto] = useState<File | null>(null);
+  const [editingPersonId, setEditingPersonId] = useState<string | null>(null);
+
+  const fetchAll = async () => {
+    try {
+      const [h, v, a, p] = await Promise.all([
+        fetch("/api/about-history").then((r) => r.json()),
+        fetch("/api/about-vision").then((r) => r.json()),
+        fetch("/api/about-aim").then((r) => r.json()),
+        fetch("/api/about-people").then((r) => r.json()),
+      ]);
+      if (h.success) setHistory(h.data);
+      if (v.success && v.data) {
+        setVision(v.data);
+        setVisionForm({ heading: v.data.heading, description: v.data.description });
+      }
+      if (a.success && a.data) {
+        setAim(a.data);
+        setAimText(a.data.aim);
+        setObjectives(a.data.objectives.length ? a.data.objectives : [{ title: "", description: "" }]);
+      }
+      if (p.success) setPeople(p.data);
+    } catch (err: any) {
+      setErrorMsg(`Failed to load: ${err.message}`);
+    }
+  };
+
+  useEffect(() => {
+    fetchAll();
+  }, []);
+
+  // History handlers
+  const submitHistory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    const url = editingHistoryId ? `/api/about-history/${editingHistoryId}` : "/api/about-history";
+    const method = editingHistoryId ? "PUT" : "POST";
+    try {
+      const res = await fetch(url, { method, headers: { "Content-Type": "application/json" }, body: JSON.stringify(historyForm) });
+      const json = await res.json();
+      if (json.success) {
+        setHistoryForm({ year: "", title: "", description: "", order: 0 });
+        setEditingHistoryId(null);
+        fetchAll();
+      } else setErrorMsg(json.error);
+    } catch (err: any) {
+      setErrorMsg(err.message);
+    }
+  };
+  const deleteHistory = async (id: string) => {
+    if (!confirm("Delete this history entry?")) return;
+    await fetch(`/api/about-history/${id}`, { method: "DELETE" });
+    fetchAll();
+  };
+
+  // Vision handler
+  const submitVision = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    if (!vision && !visionImage) {
+      alert("Please choose an image for first-time setup.");
+      return;
+    }
+    const formData = new FormData();
+    formData.append("heading", visionForm.heading);
+    formData.append("description", visionForm.description);
+    if (visionImage) formData.append("image", visionImage);
+    const method = vision ? "PUT" : "POST";
+    try {
+      const res = await fetch("/api/about-vision", { method, body: formData });
+      const json = await res.json();
+      if (json.success) {
+        setVisionImage(null);
+        fetchAll();
+      } else setErrorMsg(json.error);
+    } catch (err: any) {
+      setErrorMsg(err.message);
+    }
+  };
+
+  // Aim handler
+  const submitAim = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    const method = aim ? "PUT" : "POST";
+    try {
+      const res = await fetch("/api/about-aim", {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ aim: aimText, objectives }),
+      });
+      const json = await res.json();
+      if (json.success) fetchAll();
+      else setErrorMsg(json.error);
+    } catch (err: any) {
+      setErrorMsg(err.message);
+    }
+  };
+  const updateObjective = (i: number, field: keyof Objective, value: string) => {
+    const next = [...objectives];
+    next[i] = { ...next[i], [field]: value };
+    setObjectives(next);
+  };
+
+  // People handlers
+  const currentGroup = GROUP_MAP[subTab];
+  const submitPerson = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    if (!editingPersonId && !personPhoto) {
+      alert("Please choose a photo.");
+      return;
+    }
+    const formData = new FormData();
+    formData.append("group", currentGroup);
+    formData.append("name", personForm.name);
+    formData.append("title", personForm.title);
+    formData.append("order", String(personForm.order));
+    if (personPhoto) formData.append("photo", personPhoto);
+    const url = editingPersonId ? `/api/about-people/${editingPersonId}` : "/api/about-people";
+    const method = editingPersonId ? "PUT" : "POST";
+    try {
+      const res = await fetch(url, { method, body: formData });
+      const json = await res.json();
+      if (json.success) {
+        setPersonForm({ name: "", title: "", order: 0 });
+        setPersonPhoto(null);
+        setEditingPersonId(null);
+        fetchAll();
+      } else setErrorMsg(json.error);
+    } catch (err: any) {
+      setErrorMsg(err.message);
+    }
+  };
+  const deletePerson = async (id: string) => {
+    if (!confirm("Delete this person?")) return;
+    await fetch(`/api/about-people/${id}`, { method: "DELETE" });
+    fetchAll();
+  };
+
+  return (
+    <main className="max-w-5xl mx-auto px-6 py-10">
+      <h1 className="text-2xl font-semibold mb-6">About Page</h1>
+
+      {errorMsg && <div className="bg-red-50 border border-red-300 text-red-700 text-sm rounded-lg p-4 mb-6">{errorMsg}</div>}
+
+      <div className="flex flex-wrap gap-2 mb-8">
+        {SUB_TABS.map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setSubTab(tab)}
+            className={`px-4 py-2 rounded text-sm font-medium ${
+              subTab === tab ? "bg-green-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {subTab === "History" && (
+        <>
+          <form onSubmit={submitHistory} className="bg-white border border-gray-200 rounded-lg p-6 space-y-4 mb-8">
+            <h2 className="font-medium text-lg">{editingHistoryId ? "Edit Entry" : "Add History Entry"}</h2>
+            <div className="grid grid-cols-3 gap-4">
+              <input type="text" required placeholder="Year (e.g. 1984)" value={historyForm.year} onChange={(e) => setHistoryForm({ ...historyForm, year: e.target.value })} className="border border-gray-300 rounded px-3 py-2 text-sm" />
+              <input type="text" required placeholder="Title" value={historyForm.title} onChange={(e) => setHistoryForm({ ...historyForm, title: e.target.value })} className="border border-gray-300 rounded px-3 py-2 text-sm" />
+              <input type="number" placeholder="Order" value={historyForm.order} onChange={(e) => setHistoryForm({ ...historyForm, order: Number(e.target.value) })} className="border border-gray-300 rounded px-3 py-2 text-sm" />
+            </div>
+            <textarea required placeholder="Description" rows={2} value={historyForm.description} onChange={(e) => setHistoryForm({ ...historyForm, description: e.target.value })} className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
+            <button type="submit" className="bg-green-600 text-white px-5 py-2 rounded text-sm font-medium hover:bg-green-700">
+              {editingHistoryId ? "Update" : "Add"}
+            </button>
+          </form>
+          <div className="space-y-2">
+            {history.map((h) => (
+              <div key={h._id} className="flex items-center gap-4 bg-white border border-gray-200 rounded-lg p-4">
+                <span className="font-serif font-bold text-green-700 w-16">{h.year}</span>
+                <div className="flex-1">
+                  <p className="font-medium">{h.title}</p>
+                  <p className="text-sm text-gray-500">{h.description}</p>
+                </div>
+                <button onClick={() => { setEditingHistoryId(h._id); setHistoryForm({ year: h.year, title: h.title, description: h.description, order: h.order }); }} className="px-3 py-1.5 text-sm rounded border border-gray-300 hover:bg-gray-50">Edit</button>
+                <button onClick={() => deleteHistory(h._id)} className="px-3 py-1.5 text-sm rounded border border-red-300 text-red-600 hover:bg-red-50">Delete</button>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {subTab === "Vision" && (
+        <form onSubmit={submitVision} className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
+          <input type="text" required placeholder="Heading" value={visionForm.heading} onChange={(e) => setVisionForm({ ...visionForm, heading: e.target.value })} className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
+          <textarea required placeholder="Description" rows={4} value={visionForm.description} onChange={(e) => setVisionForm({ ...visionForm, description: e.target.value })} className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
+          {vision?.image && (
+            <div className="relative w-full h-40 rounded overflow-hidden bg-gray-100">
+              <Image src={vision.image} alt="Current" fill className="object-cover" />
+            </div>
+          )}
+          <input type="file" accept="image/*" onChange={(e) => setVisionImage(e.target.files?.[0] || null)} className="w-full text-sm" />
+          <button type="submit" className="bg-green-600 text-white px-5 py-2 rounded text-sm font-medium hover:bg-green-700">
+            {vision ? "Update" : "Create"}
+          </button>
+        </form>
+      )}
+
+      {subTab === "Aim & Objective" && (
+        <form onSubmit={submitAim} className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Aim</label>
+            <textarea required rows={3} value={aimText} onChange={(e) => setAimText(e.target.value)} className="w-full border border-gray-300 rounded px-3 py-2 text-sm" />
+          </div>
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium">Objectives</label>
+              <button type="button" onClick={() => setObjectives([...objectives, { title: "", description: "" }])} className="text-sm text-green-600 hover:underline">+ Add objective</button>
+            </div>
+            <div className="space-y-3">
+              {objectives.map((obj, i) => (
+                <div key={i} className="grid grid-cols-2 gap-3">
+                  <input type="text" required placeholder="Title" value={obj.title} onChange={(e) => updateObjective(i, "title", e.target.value)} className="border border-gray-300 rounded px-3 py-2 text-sm" />
+                  <input type="text" required placeholder="Description" value={obj.description} onChange={(e) => updateObjective(i, "description", e.target.value)} className="border border-gray-300 rounded px-3 py-2 text-sm" />
+                </div>
+              ))}
+            </div>
+          </div>
+          <button type="submit" className="bg-green-600 text-white px-5 py-2 rounded text-sm font-medium hover:bg-green-700">
+            {aim ? "Update" : "Create"}
+          </button>
+        </form>
+      )}
+
+      {(subTab === "Founder Member" || subTab === "Former VC" || subTab === "Former Principal") && (
+        <>
+          <form onSubmit={submitPerson} className="bg-white border border-gray-200 rounded-lg p-6 space-y-4 mb-8">
+            <h2 className="font-medium text-lg">{editingPersonId ? "Edit" : "Add"} — {subTab}</h2>
+            <div className="grid grid-cols-3 gap-4">
+              <input type="text" required placeholder="Name" value={personForm.name} onChange={(e) => setPersonForm({ ...personForm, name: e.target.value })} className="border border-gray-300 rounded px-3 py-2 text-sm" />
+              <input type="text" required placeholder="Title" value={personForm.title} onChange={(e) => setPersonForm({ ...personForm, title: e.target.value })} className="border border-gray-300 rounded px-3 py-2 text-sm" />
+              <input type="number" placeholder="Order" value={personForm.order} onChange={(e) => setPersonForm({ ...personForm, order: Number(e.target.value) })} className="border border-gray-300 rounded px-3 py-2 text-sm" />
+            </div>
+            <input type="file" accept="image/*" onChange={(e) => setPersonPhoto(e.target.files?.[0] || null)} className="w-full text-sm" />
+            <button type="submit" className="bg-green-600 text-white px-5 py-2 rounded text-sm font-medium hover:bg-green-700">
+              {editingPersonId ? "Update" : "Add"}
+            </button>
+          </form>
+          <div className="grid grid-cols-3 gap-4">
+            {people.filter((p) => p.group === currentGroup).map((p) => (
+              <div key={p._id} className="bg-white border border-gray-200 rounded-lg p-4">
+                <div className="relative w-full h-28 rounded overflow-hidden mb-2 bg-gray-100">
+                  <Image src={p.photo} alt={p.name} fill className="object-cover" />
+                </div>
+                <p className="font-medium text-sm">{p.name}</p>
+                <p className="text-xs text-gray-500 mb-2">{p.title}</p>
+                <div className="flex gap-2">
+                  <button onClick={() => { setEditingPersonId(p._id); setPersonForm({ name: p.name, title: p.title, order: p.order }); }} className="text-xs px-2 py-1 rounded border border-gray-300 hover:bg-gray-50">Edit</button>
+                  <button onClick={() => deletePerson(p._id)} className="text-xs px-2 py-1 rounded border border-red-300 text-red-600 hover:bg-red-50">Delete</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+    </main>
+  );
+}
