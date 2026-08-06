@@ -14,10 +14,11 @@ export async function OPTIONS() {
   return withCors(new NextResponse(null, { status: 204 }));
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   await connectDB();
+  const { id } = await context.params;
   const formData = await req.formData();
-  const existing = await Testimonial.findById(params.id);
+  const existing = await Testimonial.findById(id);
 
   if (!existing) {
     return withCors(NextResponse.json({ success: false, error: "Testimonial not found" }, { status: 404 }));
@@ -48,20 +49,21 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     updates.avatarPublicId = uploadResult.public_id;
   }
 
-  const updated = await Testimonial.findByIdAndUpdate(params.id, updates, { new: true });
+  const updated = await Testimonial.findByIdAndUpdate(id, updates, { new: true });
   return withCors(NextResponse.json({ success: true, data: updated }));
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
   await connectDB();
-  const testimonial = await Testimonial.findById(params.id);
+  const { id } = await context.params;
+  const testimonial = await Testimonial.findById(id);
 
   if (!testimonial) {
     return withCors(NextResponse.json({ success: false, error: "Testimonial not found" }, { status: 404 }));
   }
 
   await cloudinary.uploader.destroy(testimonial.avatarPublicId);
-  await Testimonial.findByIdAndDelete(params.id);
+  await Testimonial.findByIdAndDelete(id);
 
   return withCors(NextResponse.json({ success: true, data: {} }));
 }

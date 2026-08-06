@@ -14,10 +14,11 @@ export async function OPTIONS() {
   return withCors(new NextResponse(null, { status: 204 }));
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   await connectDB();
+  const { id } = await context.params;
   const formData = await req.formData();
-  const existing = await Facility.findById(params.id);
+  const existing = await Facility.findById(id);
 
   if (!existing) {
     return withCors(NextResponse.json({ success: false, error: "Facility not found" }, { status: 404 }));
@@ -49,20 +50,21 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     updates.imagePublicId = uploadResult.public_id;
   }
 
-  const updated = await Facility.findByIdAndUpdate(params.id, updates, { new: true });
+  const updated = await Facility.findByIdAndUpdate(id, updates, { new: true });
   return withCors(NextResponse.json({ success: true, data: updated }));
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
   await connectDB();
-  const facility = await Facility.findById(params.id);
+  const { id } = await context.params;
+  const facility = await Facility.findById(id);
 
   if (!facility) {
     return withCors(NextResponse.json({ success: false, error: "Facility not found" }, { status: 404 }));
   }
 
   await cloudinary.uploader.destroy(facility.imagePublicId);
-  await Facility.findByIdAndDelete(params.id);
+  await Facility.findByIdAndDelete(id);
 
   return withCors(NextResponse.json({ success: true, data: {} }));
 }

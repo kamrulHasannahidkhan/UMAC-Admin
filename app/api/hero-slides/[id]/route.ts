@@ -14,10 +14,11 @@ export async function OPTIONS() {
   return withCors(new NextResponse(null, { status: 204 }));
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   await connectDB();
+  const { id } = await context.params;
   const formData = await req.formData();
-  const existing = await Slide.findById(params.id);
+  const existing = await Slide.findById(id);
 
   if (!existing) {
     return withCors(NextResponse.json({ success: false, error: "Slide not found" }, { status: 404 }));
@@ -33,9 +34,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
 
   const file = formData.get("bgImage") as File | null;
   if (file && file.size > 0) {
-    // Replace old Cloudinary image
     await cloudinary.uploader.destroy(existing.bgImagePublicId);
-
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
     const uploadResult = await new Promise<any>((resolve, reject) => {
@@ -46,25 +45,25 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
         })
         .end(buffer);
     });
-
     updates.bgImage = uploadResult.secure_url;
     updates.bgImagePublicId = uploadResult.public_id;
   }
 
-  const updated = await Slide.findByIdAndUpdate(params.id, updates, { new: true });
+  const updated = await Slide.findByIdAndUpdate(id, updates, { new: true });
   return withCors(NextResponse.json({ success: true, data: updated }));
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
   await connectDB();
-  const slide = await Slide.findById(params.id);
+  const { id } = await context.params;
+  const slide = await Slide.findById(id);
 
   if (!slide) {
     return withCors(NextResponse.json({ success: false, error: "Slide not found" }, { status: 404 }));
   }
 
   await cloudinary.uploader.destroy(slide.bgImagePublicId);
-  await Slide.findByIdAndDelete(params.id);
+  await Slide.findByIdAndDelete(id);
 
   return withCors(NextResponse.json({ success: true, data: {} }));
 }

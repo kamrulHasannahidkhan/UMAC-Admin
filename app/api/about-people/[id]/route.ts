@@ -14,10 +14,11 @@ export async function OPTIONS() {
   return withCors(new NextResponse(null, { status: 204 }));
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   await connectDB();
+  const { id } = await context.params;
   const formData = await req.formData();
-  const existing = await AboutPerson.findById(params.id);
+  const existing = await AboutPerson.findById(id);
   if (!existing) return withCors(NextResponse.json({ success: false, error: "Not found" }, { status: 404 }));
 
   const updates: Record<string, any> = {
@@ -39,15 +40,16 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     updates.photoPublicId = uploaded.public_id;
   }
 
-  const updated = await AboutPerson.findByIdAndUpdate(params.id, updates, { new: true });
+  const updated = await AboutPerson.findByIdAndUpdate(id, updates, { new: true });
   return withCors(NextResponse.json({ success: true, data: updated }));
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
   await connectDB();
-  const person = await AboutPerson.findById(params.id);
+  const { id } = await context.params;
+  const person = await AboutPerson.findById(id);
   if (!person) return withCors(NextResponse.json({ success: false, error: "Not found" }, { status: 404 }));
   await cloudinary.uploader.destroy(person.photoPublicId);
-  await AboutPerson.findByIdAndDelete(params.id);
+  await AboutPerson.findByIdAndDelete(id);
   return withCors(NextResponse.json({ success: true, data: {} }));
 }

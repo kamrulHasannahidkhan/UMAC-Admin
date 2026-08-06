@@ -20,6 +20,7 @@ import {
   PanelTop,
   HandCoins,
   Leaf,
+  Phone,
   ChevronDown,
 } from "lucide-react";
 
@@ -54,6 +55,12 @@ const navItems: NavItem[] = [
   { label: "News", href: "/news", icon: Newspaper },
   { label: "Testimonials", href: "/testimonials", icon: MessageSquareQuote },
   { label: "Notice & Publication", href: "/notice-items", icon: Bell },
+  {
+    label: "Contact Us",
+    href: "/contact-banner",
+    icon: Phone,
+    children: [{ label: "Contact Info", href: "/contact-info", icon: Phone }],
+  },
 ];
 
 export default function Sidebar() {
@@ -91,7 +98,10 @@ export default function Sidebar() {
                   {item.label}
                 </Link>
                 {hasChildren && (
-                  <button onClick={() => setOpenGroup(isGroupOpen ? null : item.label)} className="px-2 py-2.5 text-gray-500 hover:text-white">
+                  <button
+                    onClick={() => setOpenGroup(isGroupOpen ? null : item.label)}
+                    className="px-2 py-2.5 text-gray-500 hover:text-white"
+                  >
                     <ChevronDown size={16} className={`transition-transform ${isGroupOpen ? "rotate-180" : ""}`} />
                   </button>
                 )}

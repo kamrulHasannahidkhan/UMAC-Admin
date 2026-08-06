@@ -14,10 +14,11 @@ export async function OPTIONS() {
   return withCors(new NextResponse(null, { status: 204 }));
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   await connectDB();
+  const { id } = await context.params;
   const formData = await req.formData();
-  const existing = await CampusLifeCard.findById(params.id);
+  const existing = await CampusLifeCard.findById(id);
 
   if (!existing) {
     return withCors(NextResponse.json({ success: false, error: "Card not found" }, { status: 404 }));
@@ -45,20 +46,21 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     updates.imagePublicId = uploadResult.public_id;
   }
 
-  const updated = await CampusLifeCard.findByIdAndUpdate(params.id, updates, { new: true });
+  const updated = await CampusLifeCard.findByIdAndUpdate(id, updates, { new: true });
   return withCors(NextResponse.json({ success: true, data: updated }));
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
   await connectDB();
-  const card = await CampusLifeCard.findById(params.id);
+  const { id } = await context.params;
+  const card = await CampusLifeCard.findById(id);
 
   if (!card) {
     return withCors(NextResponse.json({ success: false, error: "Card not found" }, { status: 404 }));
   }
 
   await cloudinary.uploader.destroy(card.imagePublicId);
-  await CampusLifeCard.findByIdAndDelete(params.id);
+  await CampusLifeCard.findByIdAndDelete(id);
 
   return withCors(NextResponse.json({ success: true, data: {} }));
 }

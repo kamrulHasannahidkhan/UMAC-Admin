@@ -13,17 +13,19 @@ export async function OPTIONS() {
   return withCors(new NextResponse(null, { status: 204 }));
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   await connectDB();
+  const { id } = await context.params;
   const body = await req.json();
-  const updated = await AboutHistory.findByIdAndUpdate(params.id, body, { new: true });
+  const updated = await AboutHistory.findByIdAndUpdate(id, body, { new: true });
   if (!updated) return withCors(NextResponse.json({ success: false, error: "Not found" }, { status: 404 }));
   return withCors(NextResponse.json({ success: true, data: updated }));
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
   await connectDB();
-  const deleted = await AboutHistory.findByIdAndDelete(params.id);
+  const { id } = await context.params;
+  const deleted = await AboutHistory.findByIdAndDelete(id);
   if (!deleted) return withCors(NextResponse.json({ success: false, error: "Not found" }, { status: 404 }));
   return withCors(NextResponse.json({ success: true, data: {} }));
 }
