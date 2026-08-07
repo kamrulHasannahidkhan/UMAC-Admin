@@ -21,6 +21,7 @@ import {
   HandCoins,
   Leaf,
   Phone,
+  Mail,
   ChevronDown,
 } from "lucide-react";
 
@@ -61,6 +62,7 @@ const navItems: NavItem[] = [
     icon: Phone,
     children: [{ label: "Contact Info", href: "/contact-info", icon: Phone }],
   },
+  { label: "Newsletter", href: "/newsletter", icon: Mail },
 ];
 
 export default function Sidebar() {
