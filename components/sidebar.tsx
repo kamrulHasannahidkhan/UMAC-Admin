@@ -23,6 +23,7 @@ import {
   Phone,
   Mail,
   ChevronDown,
+  GalleryHorizontalEnd,
 } from "lucide-react";
 
 type NavItem = {
@@ -55,7 +56,15 @@ const navItems: NavItem[] = [
   { label: "Alumni Events", href: "/alumni-events", icon: CalendarDays },
   { label: "News", href: "/news", icon: Newspaper },
   { label: "Testimonials", href: "/testimonials", icon: MessageSquareQuote },
-  { label: "Notice & Publication", href: "/notice-items", icon: Bell },
+  {
+    label: "Notice & Media",
+    href: "/notice-items",
+    icon: Bell,
+    children: [
+      { label: "Notice Banner", href: "/notice-banner", icon: PanelTop },
+      { label: "Event Gallery", href: "/gallery", icon: GalleryHorizontalEnd },
+    ],
+  },
   {
     label: "Contact Us",
     href: "/contact-banner",

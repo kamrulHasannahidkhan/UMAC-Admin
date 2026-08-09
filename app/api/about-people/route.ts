@@ -26,6 +26,14 @@ export async function POST(req: NextRequest) {
   const file = formData.get("photo") as File;
   if (!file) return withCors(NextResponse.json({ success: false, error: "Photo is required" }, { status: 400 }));
 
+  const name = (formData.get("name") as string)?.trim();
+  const title = (formData.get("title") as string)?.trim();
+  const group = (formData.get("group") as string)?.trim();
+
+  if (!name) {
+    return withCors(NextResponse.json({ success: false, error: "Name is required" }, { status: 400 }));
+  }
+
   const bytes = await file.arrayBuffer();
   const buffer = Buffer.from(bytes);
   const uploaded = await new Promise<any>((resolve, reject) => {
@@ -33,9 +41,9 @@ export async function POST(req: NextRequest) {
   });
 
   const person = await AboutPerson.create({
-    group: formData.get("group"),
-    name: formData.get("name"),
-    title: formData.get("title"),
+    group,
+    name,
+    title,
     order: Number(formData.get("order") || 0),
     photo: uploaded.secure_url,
     photoPublicId: uploaded.public_id,
