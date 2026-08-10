@@ -22,8 +22,10 @@ import {
   Leaf,
   Phone,
   Mail,
+  GraduationCap,
   ChevronDown,
   GalleryHorizontalEnd,
+  ClipboardList,
 } from "lucide-react";
 
 type NavItem = {
@@ -66,12 +68,20 @@ const navItems: NavItem[] = [
     ],
   },
   {
+    label: "Admission",
+    href: "/admission-documents",
+    icon: ClipboardList,
+    children: [{ label: "Admission Banner", href: "/admission-banner", icon: PanelTop }],
+  },
+  {
     label: "Contact Us",
     href: "/contact-banner",
     icon: Phone,
     children: [{ label: "Contact Info", href: "/contact-info", icon: Phone }],
   },
   { label: "Newsletter", href: "/newsletter", icon: Mail },
+  { label: "Student Results", href: "/student-results", icon: GraduationCap },
+  { label: "Student Portal Posts", href: "/student-portal-posts", icon: Newspaper },
 ];
 
 export default function Sidebar() {
