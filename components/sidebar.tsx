@@ -26,6 +26,8 @@ import {
   ChevronDown,
   GalleryHorizontalEnd,
   ClipboardList,
+  School,
+  FlaskConical,
 } from "lucide-react";
 
 type NavItem = {
@@ -52,7 +54,17 @@ const navItems: NavItem[] = [
   { label: "Stats Banner", href: "/stats", icon: BarChart3 },
   { label: "Department Search", href: "/department-search", icon: Search },
   { label: "Page Banner", href: "/page-banner", icon: Layers },
-  { label: "Facilities", href: "/facilities", icon: Building2 },
+  {
+    label: "Facilities",
+    href: "/facility-content",
+    icon: Building2,
+    children: [
+      { label: "Facility Banner", href: "/facility-banner", icon: PanelTop },
+      { label: "Departments", href: "/facility-departments", icon: School },
+      { label: "Publications", href: "/facility-publications", icon: FileText },
+      { label: "Seminar/Hostel/Lab/Cafeteria", href: "/facility-accordion", icon: FlaskConical },
+    ],
+  },
   { label: "Principal Message", href: "/principal-message", icon: UserSquare2 },
   { label: "Campus Life", href: "/campus-life", icon: Users },
   { label: "Alumni Events", href: "/alumni-events", icon: CalendarDays },
