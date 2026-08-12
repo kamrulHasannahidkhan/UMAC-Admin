@@ -92,6 +92,7 @@ const navItems: NavItem[] = [
     children: [{ label: "Contact Info", href: "/contact-info", icon: Phone }],
   },
   { label: "Newsletter", href: "/newsletter", icon: Mail },
+  { label: "Alumni", href: "/alumni", icon: GraduationCap },
   { label: "Student Results", href: "/student-results", icon: GraduationCap },
   { label: "Student Portal Posts", href: "/student-portal-posts", icon: Newspaper },
 ];
