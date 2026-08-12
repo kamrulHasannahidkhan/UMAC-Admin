@@ -3,7 +3,7 @@ import { Schema, models, model } from "mongoose";
 const StudentResultSchema = new Schema(
   {
     studentEmail: { type: String, required: true, lowercase: true, trim: true },
-    semester: { type: String, required: true },
+    year: { type: Number, enum: [1, 2, 3, 4], required: true },
     subject: { type: String, required: true },
     marks: { type: String, required: true },
     grade: { type: String, required: true },
