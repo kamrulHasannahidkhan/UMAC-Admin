@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 type Post = { _id: string; type: "news" | "publication" | "notice"; title: string; description: string; date: string; order: number };
-const emptyForm = { type: "news" as const, title: "", description: "", date: "", order: 0 };
+const emptyForm: { type: "news" | "publication" | "notice"; title: string; description: string; date: string; order: number } = { type: "news", title: "", description: "", date: "", order: 0 };
 
 export default function StudentPortalPostsAdminPage() {
   const [posts, setPosts] = useState<Post[]>([]);
