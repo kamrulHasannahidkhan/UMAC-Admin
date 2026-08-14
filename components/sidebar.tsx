@@ -23,6 +23,7 @@ import {
   Phone,
   Mail,
   GraduationCap,
+  Briefcase,
   ChevronDown,
   GalleryHorizontalEnd,
   ClipboardList,
@@ -93,6 +94,7 @@ const navItems: NavItem[] = [
   },
   { label: "Newsletter", href: "/newsletter", icon: Mail },
   { label: "Alumni", href: "/alumni", icon: GraduationCap },
+  { label: "Career Postings", href: "/career-posts", icon: Briefcase },
   { label: "Student Results", href: "/student-results", icon: GraduationCap },
   { label: "Student Portal Posts", href: "/student-portal-posts", icon: Newspaper },
 ];
