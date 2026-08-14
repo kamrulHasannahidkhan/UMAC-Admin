@@ -24,6 +24,7 @@ import {
   Mail,
   GraduationCap,
   Briefcase,
+  Calendar,
   ChevronDown,
   GalleryHorizontalEnd,
   ClipboardList,
@@ -95,6 +96,7 @@ const navItems: NavItem[] = [
   { label: "Newsletter", href: "/newsletter", icon: Mail },
   { label: "Alumni", href: "/alumni", icon: GraduationCap },
   { label: "Career Postings", href: "/career-posts", icon: Briefcase },
+  { label: "Events", href: "/event-posts", icon: Calendar },
   { label: "Student Results", href: "/student-results", icon: GraduationCap },
   { label: "Student Portal Posts", href: "/student-portal-posts", icon: Newspaper },
 ];
