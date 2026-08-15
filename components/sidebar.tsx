@@ -48,12 +48,14 @@ type NavItem = {
   children?: ChildNavItem[];
 };
 
+// Updated navItems with parent href routes included
 const navItems: NavItem[] = [
   { label: "Dashboard", href: "/", icon: LayoutDashboard },
   { label: "Hero Slides", href: "/hero-slides", icon: ImageIcon },
   { label: "About Section", href: "/about", icon: FileText },
   {
     label: "About Page",
+    href: "/about-page", // Added parent page route
     icon: BookOpenCheck,
     children: [
       { label: "About Banner", href: "/about-banner", icon: PanelTop },
@@ -66,6 +68,7 @@ const navItems: NavItem[] = [
   { label: "Page Banner", href: "/page-banner", icon: Layers },
   {
     label: "Facilities",
+    href: "/facilities", // Added parent page route
     icon: Building2,
     children: [
       { label: "Facility Banner", href: "/facility-banner", icon: PanelTop },
@@ -81,6 +84,7 @@ const navItems: NavItem[] = [
   { label: "Testimonials", href: "/testimonials", icon: MessageSquareQuote },
   {
     label: "Notice & Media",
+    href: "/notice-media",
     icon: Bell,
     children: [
       { label: "Notice Items", href: "/notice-items", icon: Bell },
@@ -90,6 +94,7 @@ const navItems: NavItem[] = [
   },
   {
     label: "Admission",
+    href: "/admission",
     icon: ClipboardList,
     children: [
       { label: "Admission Docs", href: "/admission-documents", icon: ClipboardList },
@@ -98,6 +103,7 @@ const navItems: NavItem[] = [
   },
   {
     label: "Contact Us",
+    href: "/contact",
     icon: Phone,
     children: [
       { label: "Contact Banner", href: "/contact-banner", icon: PanelTop },
@@ -115,29 +121,28 @@ const navItems: NavItem[] = [
 
 export default function Sidebar() {
   const pathname = usePathname();
-
-  // Find initial open accordion group based on current URL path
   const [openGroup, setOpenGroup] = useState<string | null>(null);
 
   useEffect(() => {
-    const activeGroup = navItems.find((item) =>
-      item.children?.some((c) => c.href === pathname)
+    const activeGroup = navItems.find(
+      (item) => item.href === pathname || item.children?.some((c) => c.href === pathname)
     );
-    if (activeGroup) {
+    if (activeGroup && activeGroup.children) {
       setOpenGroup(activeGroup.label);
     }
   }, [pathname]);
 
-  const toggleGroup = (label: string) => {
+  const toggleGroup = (label: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     setOpenGroup((prev) => (prev === label ? null : label));
   };
 
   return (
-    <aside 
+    <aside
       className="fixed left-0 top-0 h-screen w-64 bg-slate-950 text-slate-300 flex flex-col border-r border-slate-800/80 shadow-2xl z-50 select-none"
       style={{ backgroundColor: "#090d16" }}
     >
-      {/* Sidebar Header Branding */}
       <div className="px-6 py-5 border-b border-slate-800/80 flex items-center gap-3 shrink-0">
         <div className="w-9 h-9 rounded-xl bg-emerald-600/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
           <ShieldCheck size={20} />
@@ -148,12 +153,10 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* Navigation Links Area */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent">
         {navItems.map((item) => {
           const Icon = item.icon;
           const hasChildren = Boolean(item.children && item.children.length > 0);
-          
           const isDirectActive = item.href ? pathname === item.href : false;
           const isChildActive = hasChildren && item.children?.some((c) => c.href === pathname);
           const isGroupOpen = openGroup === item.label;
@@ -161,29 +164,32 @@ export default function Sidebar() {
           return (
             <div key={item.label} className="w-full">
               {hasChildren ? (
-                /* Accordion Parent Item Button */
-                <button
-                  type="button"
-                  onClick={() => toggleGroup(item.label)}
+                <div
                   className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
-                    isChildActive
+                    isDirectActive || isChildActive
                       ? "bg-emerald-950/50 text-emerald-400 border border-emerald-800/40"
                       : "text-slate-400 hover:bg-slate-900 hover:text-slate-100"
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <Icon size={18} className={isChildActive ? "text-emerald-400" : "text-slate-400"} />
+                  <Link href={item.href || "#"} className="flex items-center gap-3 flex-1">
+                    <Icon size={18} className={isDirectActive || isChildActive ? "text-emerald-400" : "text-slate-400"} />
                     <span>{item.label}</span>
-                  </div>
-                  <ChevronDown
-                    size={15}
-                    className={`transition-transform duration-200 text-slate-500 ${
-                      isGroupOpen ? "rotate-180 text-emerald-400" : ""
-                    }`}
-                  />
-                </button>
+                  </Link>
+
+                  <button
+                    type="button"
+                    onClick={(e) => toggleGroup(item.label, e)}
+                    className="p-1 hover:bg-slate-800 rounded-lg transition-colors"
+                  >
+                    <ChevronDown
+                      size={15}
+                      className={`transition-transform duration-200 text-slate-500 ${
+                        isGroupOpen ? "rotate-180 text-emerald-400" : ""
+                      }`}
+                    />
+                  </button>
+                </div>
               ) : (
-                /* Standard Single Link Item */
                 <Link
                   href={item.href || "#"}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
@@ -197,7 +203,6 @@ export default function Sidebar() {
                 </Link>
               )}
 
-              {/* Collapsible Sub-menu Items */}
               {hasChildren && isGroupOpen && (
                 <div className="ml-4 mt-1 space-y-1 border-l border-slate-800/80 pl-3 py-1">
                   {item.children!.map((child) => {
@@ -225,7 +230,6 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Sidebar Footer */}
       <div className="px-6 py-4 border-t border-slate-800/80 shrink-0 bg-slate-950/50">
         <p className="text-[11px] font-semibold text-slate-400 tracking-wider uppercase">Uttara Adhunik</p>
         <p className="text-[10px] text-slate-400">Medical College Portal</p>
