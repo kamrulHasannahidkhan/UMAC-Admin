@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { ArrowRight, GraduationCap } from "lucide-react";
 
 type Slide = {
   _id: string;
@@ -15,6 +16,19 @@ type Slide = {
 
 const emptyForm = { badge: "", titleLine1: "", highlight: "", titleLine2: "", order: 0 };
 
+const degrees = [
+  {
+    title: "Bachelor of Medicine",
+    desc: "A degree focusing on the study of human biology, anatomy, and pathology to build a strong medical foundation.",
+  },
+  {
+    title: "Bachelor of Surgery",
+    desc: "A degree emphasizing clinical and surgical skills for diagnosing and treating patients effectively.",
+  },
+];
+
+// Exact structural + class match of client-site/components/HeroSection.tsx,
+// scaled down to fit an admin preview panel. Same markup, same Tailwind classes.
 function HeroPreview({
   badge,
   titleLine1,
@@ -30,26 +44,75 @@ function HeroPreview({
 }) {
   return (
     <div className="sticky top-6">
-      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Live Preview</p>
-      <div className="relative w-full h-[420px] rounded-lg overflow-hidden bg-gray-900 text-white">
+      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Live Preview — exact client layout</p>
+
+      <div className="relative w-full aspect-[1400/700] overflow-hidden text-white font-sans bg-gray-900 rounded-lg">
+        {/* Background */}
         {imagePreviewUrl ? (
-          <Image src={imagePreviewUrl} alt="preview" fill className="object-cover" unoptimized />
+          <Image src={imagePreviewUrl} alt="preview" fill className="object-cover object-center" unoptimized />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-900" />
         )}
+
         <div className="absolute inset-0 bg-black/10" />
-        <div className="relative z-10 h-full flex items-end p-6">
-          <div className="bg-[#0a3d24]/50 backdrop-blur-sm border border-white/20 rounded-sm p-5 max-w-sm">
-            <p className="text-xs text-gray-200 mb-2">{badge || "Badge text goes here"}</p>
-            <h2 className="text-2xl font-serif leading-tight">
-              <span className="font-bold">{titleLine1 || "Title line 1"}</span>{" "}
-              <span className="italic text-[#facc15]">{highlight || "highlight"}</span>
-              <span>, {titleLine2 || "title line 2"}</span>
-            </h2>
+
+        {/* Top pagination bar — matches HeroSection exactly, static preview (single slide = "01") */}
+        <div className="relative z-10 max-w-[1400px] mx-auto px-8 pt-6 flex items-center justify-between text-[9px] tracking-widest font-semibold uppercase">
+          <span className="text-gray-200">PREV</span>
+          <div className="flex-1 max-w-md mx-8 flex items-center justify-center gap-4 border-t border-white/30 pt-1">
+            <span className="text-[#facc15] font-bold text-xs">01</span>
+          </div>
+          <span className="text-gray-200">NEXT</span>
+        </div>
+
+        {/* Frosted overlay content block */}
+        <div className="relative z-10 max-w-[1400px] mx-auto px-4 h-[calc(100%-56px)] flex items-end pb-6">
+          <div className="w-full bg-[#0a3d24]/35 backdrop-blur-[3px] border border-white/20 rounded-sm p-4 md:p-6 shadow-xl">
+            <div className="flex flex-col lg:flex-row w-full items-end justify-between gap-4">
+              {/* Left content */}
+              <div className="max-w-md">
+                <p className="flex items-center gap-1.5 text-[10px] mb-2 text-gray-100 font-normal tracking-wide">
+                  <GraduationCap size={12} className="text-white shrink-0" />
+                  {badge || "Badge text goes here"}
+                </p>
+
+                <h1 className="text-lg md:text-xl leading-[1.15] mb-3 font-serif text-white tracking-tight">
+                  <span className="font-bold">{titleLine1 || "Title line 1"}</span>{" "}
+                  <span className="font-serif italic text-white">in Medical</span>
+                  <br />
+                  <span className="font-serif italic text-[#facc15] font-semibold">
+                    {highlight || "highlight"}
+                  </span>
+                  <span className="font-serif">, {titleLine2 || "title line 2"}</span>
+                </h1>
+
+                <button
+                  type="button"
+                  className="bg-white text-[#0a3d24] font-semibold text-[9px] tracking-wider uppercase px-3 py-2 rounded-sm inline-flex items-center gap-1.5 shadow-md pointer-events-none"
+                >
+                  View Our Program <ArrowRight size={10} />
+                </button>
+              </div>
+
+              {/* Right: MBBS Degrees */}
+              <div className="hidden lg:block w-40 shrink-0">
+                <h3 className="text-[#facc15] text-sm font-serif font-bold mb-2">MBBS Degrees</h3>
+                <div className="space-y-2">
+                  {degrees.map((d) => (
+                    <div key={d.title} className="border-t border-white/25 pt-1.5">
+                      <p className="font-serif text-[10px] text-white font-medium">{d.title}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-      <p className="text-xs text-gray-400 mt-2">This mirrors the live homepage hero — updates as you type, before you save.</p>
+
+      <p className="text-xs text-gray-400 mt-2">
+        Scaled-down mirror of the real homepage hero — same layout, fonts, and colors as the live site.
+      </p>
     </div>
   );
 }
@@ -80,7 +143,6 @@ export default function HeroSlidesPage() {
     fetchSlides();
   }, []);
 
-  // Build a temporary local preview URL whenever a new file is chosen
   useEffect(() => {
     if (!file) return;
     const url = URL.createObjectURL(file);
@@ -144,7 +206,7 @@ export default function HeroSlidesPage() {
       order: slide.order,
     });
     setFile(null);
-    setImagePreviewUrl(slide.bgImage); // preview shows current saved image until a new file is chosen
+    setImagePreviewUrl(slide.bgImage);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -166,7 +228,7 @@ export default function HeroSlidesPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-8 mb-10">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_480px] gap-8 mb-10">
         <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
           <h2 className="font-medium text-lg">{editingId ? "Edit Slide" : "Add New Slide"}</h2>
 
