@@ -58,7 +58,6 @@ const navItems: NavItem[] = [
   { label: "About Section", href: "/about", icon: FileText },
   {
     label: "About Page",
-    href: "/about-page",
     icon: BookOpenCheck,
     children: [
       { label: "About Banner", href: "/about-banner", icon: PanelTop },
@@ -76,11 +75,11 @@ const navItems: NavItem[] = [
     children: [
       { label: "Facility Banner", href: "/facility-banner", icon: PanelTop },
       { label: "Hospital Service", href: "/facilities/hospital-service", icon: Cross },
-      { label: "Departments", href: "/facility-departments", icon: School },
+      { label: "Departments", href: "/facilities/departments", icon: School },
       { label: "Library", href: "/facilities/library", icon: BookOpen },
       { label: "Medical Education Unit", href: "/facilities/medical-education-unit", icon: GraduationCap },
       { label: "Training", href: "/facilities/training", icon: Award },
-      { label: "Publications", href: "/facility-publications", icon: FileText },
+      { label: "Publications", href: "/facilities/publications", icon: FileText },
       { label: "Seminar", href: "/facilities/seminar", icon: FlaskConical },
       { label: "Hostel", href: "/facilities/hostel", icon: Building2 },
       { label: "Laboratory", href: "/facilities/laboratory", icon: FlaskConical },
