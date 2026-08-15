@@ -58,6 +58,7 @@ const navItems: NavItem[] = [
   { label: "About Section", href: "/about", icon: FileText },
   {
     label: "About Page",
+    href: "/about-page",
     icon: BookOpenCheck,
     children: [
       { label: "About Banner", href: "/about-banner", icon: PanelTop },
