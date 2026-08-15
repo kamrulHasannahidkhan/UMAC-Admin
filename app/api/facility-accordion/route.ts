@@ -13,7 +13,19 @@ export async function OPTIONS() {
   return withCors(new NextResponse(null, { status: 204 }));
 }
 
-const SECTIONS = ["seminar", "hostel", "laboratory", "cafeteria"];
+// Updated with all 10 facility section slugs matching frontend & sidebar
+const SECTIONS = [
+  "hospital-service",
+  "departments",
+  "library",
+  "medical-education-unit",
+  "training",
+  "publications",
+  "seminar",
+  "hostel",
+  "laboratory",
+  "cafeteria",
+];
 
 export async function GET(req: NextRequest) {
   await connectDB();
@@ -21,7 +33,9 @@ export async function GET(req: NextRequest) {
 
   if (section) {
     if (!SECTIONS.includes(section)) {
-      return withCors(NextResponse.json({ success: false, error: "Invalid section" }, { status: 400 }));
+      return withCors(
+        NextResponse.json({ success: false, error: "Invalid section" }, { status: 400 })
+      );
     }
     const doc = await FacilityAccordion.findOne({ section });
     return withCors(NextResponse.json({ success: true, data: doc }));
@@ -37,17 +51,28 @@ export async function POST(req: NextRequest) {
   const { section, heading, description, items } = body;
 
   if (!SECTIONS.includes(section)) {
-    return withCors(NextResponse.json({ success: false, error: "Invalid section" }, { status: 400 }));
+    return withCors(
+      NextResponse.json({ success: false, error: "Invalid section" }, { status: 400 })
+    );
   }
 
   const existing = await FacilityAccordion.findOne({ section });
   if (existing) {
     return withCors(
-      NextResponse.json({ success: false, error: "Content for this section already exists — use edit instead." }, { status: 400 })
+      NextResponse.json(
+        { success: false, error: "Content for this section already exists — use edit instead." },
+        { status: 400 }
+      )
     );
   }
 
-  const doc = await FacilityAccordion.create({ section, heading, description, items: items || [] });
+  const doc = await FacilityAccordion.create({
+    section,
+    heading,
+    description,
+    items: items || [],
+  });
+
   return withCors(NextResponse.json({ success: true, data: doc }, { status: 201 }));
 }
 
@@ -57,12 +82,19 @@ export async function PUT(req: NextRequest) {
   const { section, heading, description, items } = body;
 
   if (!SECTIONS.includes(section)) {
-    return withCors(NextResponse.json({ success: false, error: "Invalid section" }, { status: 400 }));
+    return withCors(
+      NextResponse.json({ success: false, error: "Invalid section" }, { status: 400 })
+    );
   }
 
   const existing = await FacilityAccordion.findOne({ section });
   if (!existing) {
-    return withCors(NextResponse.json({ success: false, error: "No content to update for this section yet" }, { status: 404 }));
+    return withCors(
+      NextResponse.json(
+        { success: false, error: "No content to update for this section yet" },
+        { status: 404 }
+      )
+    );
   }
 
   const updated = await FacilityAccordion.findByIdAndUpdate(

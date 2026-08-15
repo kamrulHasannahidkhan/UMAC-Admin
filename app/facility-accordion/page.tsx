@@ -18,7 +18,14 @@ type FacilityAccordionDoc = {
   items: AccordionItem[];
 };
 
+// Expanded list matching all 10 facility routes from your sidebar
 const SECTIONS = [
+  { label: "Hospital Service", value: "hospital-service" },
+  { label: "Departments", value: "departments" },
+  { label: "Library", value: "library" },
+  { label: "Medical Education Unit", value: "medical-education-unit" },
+  { label: "Training", value: "training" },
+  { label: "Publications", value: "publications" },
   { label: "Seminar", value: "seminar" },
   { label: "Hostel", value: "hostel" },
   { label: "Laboratory", value: "laboratory" },
@@ -26,21 +33,23 @@ const SECTIONS = [
 ] as const;
 
 export default function FacilityAccordionAdmin() {
-  const [section, setSection] = useState<(typeof SECTIONS)[number]["value"]>("seminar");
+  const [section, setSection] = useState<(typeof SECTIONS)[number]["value"]>("hospital-service");
   const [doc, setDoc] = useState<FacilityAccordionDoc | null>(null);
   const [heading, setHeading] = useState("");
   const [description, setDescription] = useState("");
   const [items, setItems] = useState<AccordionItem[]>([]);
+  const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const fetchDoc = async (sec: string) => {
+    setLoading(true);
     try {
       const res = await fetch(`/api/facility-accordion?section=${sec}`);
       const json = await res.json();
       if (json.success && json.data) {
         setDoc(json.data);
-        setHeading(json.data.heading);
+        setHeading(json.data.heading || "");
         setDescription(json.data.description || "");
         setItems(json.data.items || []);
       } else {
@@ -51,6 +60,8 @@ export default function FacilityAccordionAdmin() {
       }
     } catch (err: any) {
       setErrorMsg(`Failed to load content: ${err.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -79,8 +90,9 @@ export default function FacilityAccordionAdmin() {
       }
     } catch (err: any) {
       setErrorMsg(err.message);
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
   };
 
   const updateItem = (i: number, field: keyof AccordionItem, value: string) => {
@@ -89,12 +101,14 @@ export default function FacilityAccordionAdmin() {
     setItems(next);
   };
 
-  const addItem = () => setItems([...items, { group: "", title: "", description: "", image: "", order: items.length }]);
+  const addItem = () =>
+    setItems([...items, { group: "", title: "", description: "", image: "", order: items.length }]);
+
   const removeItem = (i: number) => setItems(items.filter((_, idx) => idx !== i));
 
   return (
     <main className="max-w-4xl mx-auto px-6 py-10">
-      <h1 className="text-2xl font-semibold mb-6">Facility Accordion Admin</h1>
+      <h1 className="text-2xl font-semibold mb-6">Facility Sections Admin</h1>
 
       {errorMsg && (
         <div className="bg-red-50 border border-red-300 text-red-700 text-sm rounded-lg p-4 mb-6 flex justify-between items-center">
@@ -105,10 +119,12 @@ export default function FacilityAccordionAdmin() {
         </div>
       )}
 
+      {/* Navigation Filter Buttons */}
       <div className="flex flex-wrap gap-2 mb-8">
         {SECTIONS.map((s) => (
           <button
             key={s.value}
+            type="button"
             onClick={() => {
               setSection(s.value);
               setErrorMsg(null);
@@ -122,83 +138,109 @@ export default function FacilityAccordionAdmin() {
         ))}
       </div>
 
-      <form onSubmit={submit} className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
-        <input
-          type="text"
-          required
-          placeholder="Heading (e.g. Scientific Seminars)"
-          value={heading}
-          onChange={(e) => setHeading(e.target.value)}
-          className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
-        />
-        <textarea
-          rows={2}
-          placeholder="Intro description (optional)"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
-        />
-
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="text-sm font-medium">Accordion Items</label>
-            <button type="button" onClick={addItem} className="text-sm text-green-600 hover:underline">
-              + Add item
-            </button>
+      {loading ? (
+        <p className="text-sm text-gray-400">Loading section details...</p>
+      ) : (
+        <form onSubmit={submit} className="bg-white border border-gray-200 rounded-lg p-6 space-y-4">
+          <div>
+            <label className="block text-sm font-medium mb-1">Section Title</label>
+            <input
+              type="text"
+              required
+              placeholder="Heading (e.g. Modern Cafeteria Services)"
+              value={heading}
+              onChange={(e) => setHeading(e.target.value)}
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+            />
           </div>
-          <div className="space-y-3">
-            {items.map((item, i) => (
-              <div key={i} className="border border-gray-200 rounded-lg p-3 space-y-2">
-                <div className="grid grid-cols-2 gap-2">
-                  <input
-                    type="text"
-                    placeholder="Group label (optional, e.g. Academic Activities)"
-                    value={item.group || ""}
-                    onChange={(e) => updateItem(i, "group", e.target.value)}
-                    className="border border-gray-300 rounded px-3 py-2 text-sm"
+
+          <div>
+            <label className="block text-sm font-medium mb-1">Description (Optional)</label>
+            <textarea
+              rows={2}
+              placeholder="Intro description for this facility section"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
+            />
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-medium">Accordion Items</label>
+              <button type="button" onClick={addItem} className="text-sm text-green-600 font-medium hover:underline">
+                + Add Item
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {items.map((item, i) => (
+                <div key={i} className="border border-gray-200 rounded-lg p-4 space-y-3 bg-gray-50/50">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input
+                      type="text"
+                      placeholder="Group label (optional, e.g. Overview)"
+                      value={item.group || ""}
+                      onChange={(e) => updateItem(i, "group", e.target.value)}
+                      className="border border-gray-300 rounded px-3 py-2 text-sm bg-white"
+                    />
+                    <input
+                      type="text"
+                      placeholder="Item Title"
+                      value={item.title}
+                      onChange={(e) => updateItem(i, "title", e.target.value)}
+                      className="border border-gray-300 rounded px-3 py-2 text-sm bg-white"
+                    />
+                  </div>
+
+                  <textarea
+                    rows={2}
+                    placeholder="Description text"
+                    value={item.description}
+                    onChange={(e) => updateItem(i, "description", e.target.value)}
+                    className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white"
                   />
-                  <input
-                    type="text"
-                    placeholder="Title"
-                    value={item.title}
-                    onChange={(e) => updateItem(i, "title", e.target.value)}
-                    className="border border-gray-300 rounded px-3 py-2 text-sm"
-                  />
+
+                  <div className="grid grid-cols-1 md:grid-cols-[1fr_100px] gap-3">
+                    <input
+                      type="text"
+                      placeholder="Image URL (Cloudinary or public link)"
+                      value={item.image || ""}
+                      onChange={(e) => updateItem(i, "image", e.target.value)}
+                      className="w-full border border-gray-300 rounded px-3 py-2 text-sm bg-white"
+                    />
+                    <input
+                      type="number"
+                      placeholder="Order"
+                      value={item.order}
+                      onChange={(e) => updateItem(i, "order", e.target.value)}
+                      className="border border-gray-300 rounded px-3 py-2 text-sm bg-white"
+                    />
+                  </div>
+
+                  <div className="flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => removeItem(i)}
+                      className="text-xs px-3 py-1 text-red-600 border border-red-300 rounded hover:bg-red-50"
+                    >
+                      Remove Item
+                    </button>
+                  </div>
                 </div>
-                <textarea
-                  rows={2}
-                  placeholder="Description"
-                  value={item.description}
-                  onChange={(e) => updateItem(i, "description", e.target.value)}
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
-                />
-                <input
-                  type="text"
-                  placeholder="Image URL (optional — upload elsewhere and paste the Cloudinary URL here)"
-                  value={item.image || ""}
-                  onChange={(e) => updateItem(i, "image", e.target.value)}
-                  className="w-full border border-gray-300 rounded px-3 py-2 text-sm"
-                />
-                <button
-                  type="button"
-                  onClick={() => removeItem(i)}
-                  className="text-xs px-2 py-1 text-red-600 border border-red-300 rounded hover:bg-red-50"
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
 
-        <button
-          type="submit"
-          disabled={saving}
-          className="bg-green-600 text-white px-5 py-2 rounded text-sm font-medium hover:bg-green-700 disabled:opacity-50"
-        >
-          {saving ? "Saving..." : doc ? "Update" : "Create"}
-        </button>
-      </form>
+          <button
+            type="submit"
+            disabled={saving}
+            className="bg-green-600 text-white px-5 py-2 rounded text-sm font-medium hover:bg-green-700 disabled:opacity-50"
+          >
+            {saving ? "Saving..." : doc ? "Update Section" : "Create Section"}
+          </button>
+        </form>
+      )}
     </main>
   );
 }
